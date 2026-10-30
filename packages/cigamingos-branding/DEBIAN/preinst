@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+# Divert Debian's identity files so ours take their place cleanly.
+# os-release is shipped directly; issue/issue.net are symlinked in postinst
+# (they're conffiles of base-files, and conffiles + diversions don't mix).
+if [ "$1" = install ] || [ "$1" = upgrade ]; then
+  for f in /usr/lib/os-release /etc/issue /etc/issue.net; do
+    dpkg-divert --package cigamingos-branding --add --rename \
+      --divert "$f.debian" "$f" >/dev/null 2>&1   # quiet: "Essential package" rename warning is expected
+  done
+fi
+exit 0

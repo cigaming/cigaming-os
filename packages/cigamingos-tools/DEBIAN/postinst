@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+  # enable without starting: it should only fire on a real boot
+  if command -v deb-systemd-helper >/dev/null 2>&1; then
+    deb-systemd-helper enable cigamingos-firstboot.service >/dev/null || true
+  elif command -v systemctl >/dev/null 2>&1; then
+    systemctl enable cigamingos-firstboot.service >/dev/null 2>&1 || true
+  fi
+fi
+exit 0

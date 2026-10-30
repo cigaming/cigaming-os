@@ -1,0 +1,20 @@
+# Option B: serve the repo from your own Caddy (e.g. the 10.1.10.78 host)
+# instead of GitHub Pages. Copy build/repo-public/ to the root below
+# (the CI "repo-site" artifact contains exactly that folder).
+#
+# It's static files only, so Caddy on Windows works fine.
+
+repo.cigaming.dev {
+	root * C:\caddy\sites\repo.cigaming.dev
+	file_server browse
+
+	# apt metadata changes on every publish — don't let it get cached stale
+	@meta path /dists/*
+	header @meta Cache-Control "no-cache"
+
+	# packages are immutable once published
+	@pool path /pool/*
+	header @pool Cache-Control "public, max-age=31536000, immutable"
+
+	encode zstd gzip
+}

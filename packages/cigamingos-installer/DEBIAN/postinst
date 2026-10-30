@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+# Point Calamares at our branding and relabel the desktop launcher.
+if [ "$1" = configure ]; then
+  S=/etc/calamares/settings.conf
+  [ -f "$S" ] && sed -i 's/^branding:.*/branding: cigamingos/' "$S"
+  for f in /usr/share/applications/install-debian.desktop /etc/skel/Desktop/install-debian.desktop; do
+    [ -f "$f" ] || continue
+    sed -i -e 's/^Name=.*/Name=Install CiGaming OS/' -e 's/^Icon=.*/Icon=cigamingos/' "$f"
+    sed -i '/^Name\[/d;/^Comment\[/d' "$f"
+  done
+fi
+exit 0

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 3840 2160" width="3840" height="2160">
+  <!-- CiGaming OS default wallpaper: cozy night sky with the cub moon. {{TOKENS}} from palette.env -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{NIGHT}}"/>
+      <stop offset="0.65" stop-color="{{PLUM}}"/>
+      <stop offset="1" stop-color="{{DUSK}}"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="{{AMBER}}" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="{{AMBER}}" stop-opacity="0"/>
+    </radialGradient>
+    <g id="star"><path d="M0 -14 L4 -4 L14 0 L4 4 L0 14 L-4 4 L-14 0 L-4 -4 Z" fill="{{CREAM}}"/></g>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#sky)"/>
+  <circle cx="2720" cy="760" r="760" fill="url(#glow)"/>
+  <!-- stars -->
+  <g opacity="0.85">
+    <use xlink:href="#star" x="420" y="300"/><use xlink:href="#star" x="760" y="620" transform="scale(1)"/>
+    <use xlink:href="#star" x="1180" y="240"/><use xlink:href="#star" x="1520" y="520"/>
+    <use xlink:href="#star" x="1900" y="180"/><use xlink:href="#star" x="2240" y="420"/>
+    <use xlink:href="#star" x="3400" y="300"/><use xlink:href="#star" x="3620" y="760"/>
+    <use xlink:href="#star" x="300" y="980"/><use xlink:href="#star" x="1020" y="1060"/>
+    <use xlink:href="#star" x="1700" y="900"/><use xlink:href="#star" x="3300" y="1180"/>
+  </g>
+  <g fill="{{CREAM}}" opacity="0.5">
+    <circle cx="600" cy="140" r="4"/><circle cx="980" cy="420" r="3"/><circle cx="1340" cy="760" r="4"/>
+    <circle cx="2040" cy="660" r="3"/><circle cx="2500" cy="140" r="4"/><circle cx="3080" cy="160" r="3"/>
+    <circle cx="3700" cy="480" r="4"/><circle cx="200" cy="620" r="3"/><circle cx="1600" cy="1200" r="3"/>
+    <circle cx="2300" cy="1000" r="4"/><circle cx="3560" cy="1500" r="3"/><circle cx="820" cy="1400" r="3"/>
+  </g>
+  <!-- the cub, as the moon -->
+  <image xlink:href="{{LOGO_PATH}}" x="2340" y="380" width="760" height="760"/>
+  <!-- soft rolling hills -->
+  <path d="M0 1700 Q640 1500 1280 1640 T2560 1600 T3840 1560 V2160 H0 Z" fill="{{NIGHT}}" opacity="0.55"/>
+  <path d="M0 1880 Q800 1720 1600 1860 T3840 1800 V2160 H0 Z" fill="{{NIGHT}}" opacity="0.85"/>
+  <text x="240" y="2000" font-family="DejaVu Sans" font-weight="bold" font-size="120" fill="{{CREAM}}" opacity="0.9">{{OS_NAME}}</text>
+</svg>

@@ -1,0 +1,5 @@
+Types: deb
+URIs: @REPO_URL@
+Suites: @OS_CODENAME@
+Components: main
+Signed-By: /usr/share/keyrings/cigamingos-archive-keyring.gpg

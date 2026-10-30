@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE wallpapers SYSTEM "gnome-wp-list.dtd">
+<background>
+  <static>
+    <duration>8640000.0</duration>
+    <size width="3840" height="2160">/usr/share/desktop-base/cigamingos-theme/wallpaper/contents/images/3840x2160.png</size>
+    <size width="1920" height="1080">/usr/share/desktop-base/cigamingos-theme/wallpaper/contents/images/1920x1080.png</size>
+  </static>
+</background>

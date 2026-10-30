@@ -1,0 +1,11 @@
+Package: cigamingos-keyring
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: misc
+Priority: important
+Homepage: @REPO_URL@
+Description: CiGaming OS archive signing key and apt source
+ Installs the public key that signs the CiGaming OS package repository
+ (@REPO_URL@) and enables that repository, so `apt upgrade` delivers
+ CiGaming OS updates alongside Debian's.

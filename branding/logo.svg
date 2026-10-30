@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- CiGaming OS mark: a lion cub face. Colors are {{TOKENS}} filled from palette.env -->
+  <g transform="translate(256 262)">
+    <!-- mane: 12 rounded petals -->
+    <g fill="{{MANE}}">
+      <circle cx="0" cy="-178" r="58"/>
+      <circle cx="89" cy="-154" r="58"/>
+      <circle cx="154" cy="-89" r="58"/>
+      <circle cx="178" cy="0" r="58"/>
+      <circle cx="154" cy="89" r="58"/>
+      <circle cx="89" cy="154" r="58"/>
+      <circle cx="0" cy="178" r="58"/>
+      <circle cx="-89" cy="154" r="58"/>
+      <circle cx="-154" cy="89" r="58"/>
+      <circle cx="-178" cy="0" r="58"/>
+      <circle cx="-154" cy="-89" r="58"/>
+      <circle cx="-89" cy="-154" r="58"/>
+    </g>
+    <circle r="168" fill="{{MANE}}"/>
+    <!-- ears -->
+    <circle cx="-92" cy="-104" r="40" fill="{{AMBER}}"/>
+    <circle cx="92" cy="-104" r="40" fill="{{AMBER}}"/>
+    <circle cx="-92" cy="-104" r="20" fill="{{CREAM}}"/>
+    <circle cx="92" cy="-104" r="20" fill="{{CREAM}}"/>
+    <!-- face -->
+    <circle r="132" fill="{{AMBER}}"/>
+    <!-- muzzle -->
+    <ellipse cx="-30" cy="48" rx="44" ry="36" fill="{{CREAM}}"/>
+    <ellipse cx="30" cy="48" rx="44" ry="36" fill="{{CREAM}}"/>
+    <!-- eyes -->
+    <ellipse cx="-50" cy="-18" rx="17" ry="22" fill="{{NIGHT}}"/>
+    <ellipse cx="50" cy="-18" rx="17" ry="22" fill="{{NIGHT}}"/>
+    <circle cx="-44" cy="-26" r="6" fill="{{CREAM}}"/>
+    <circle cx="56" cy="-26" r="6" fill="{{CREAM}}"/>
+    <!-- nose -->
+    <path d="M-22 18 Q0 8 22 18 Q14 40 0 44 Q-14 40 -22 18 Z" fill="{{NIGHT}}"/>
+    <!-- blush -->
+    <circle cx="-88" cy="30" r="14" fill="{{MANE}}" opacity="0.45"/>
+    <circle cx="88" cy="30" r="14" fill="{{MANE}}" opacity="0.45"/>
+  </g>
+</svg>

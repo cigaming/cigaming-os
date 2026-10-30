@@ -1,0 +1,157 @@
+name: Build CiGaming OS
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      editions:
+        description: "ISOs to build (space separated)"
+        default: "desktop server"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Packages + apt repo
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends dpkg-dev librsvg2-bin reprepro gnupg shellcheck lintian ca-certificates curl
+      - name: Lint shell scripts
+        run: |
+          shellcheck -S warning build.sh scripts/*.sh \
+            packages/cigamingos-tools/usr/bin/cigaming \
+            packages/cigamingos-tools/usr/lib/cigamingos/firstboot \
+            packages/*/DEBIAN/p* editions/*/hooks/live/*.hook.*
+      - name: Build .debs
+        run: ./scripts/build-packages.sh
+      - name: Lintian (informational)
+        run: lintian --no-tag-display-limit --suppress-tags-from-file .lintian-overrides build/debs/*.deb || true
+      - name: Sign + publish repo
+        if: github.event_name != 'pull_request'
+        env:
+          REPO_SIGNING_KEY: ${{ secrets.REPO_SIGNING_KEY }}
+        run: |
+          if [ -z "$REPO_SIGNING_KEY" ]; then echo "::warning::REPO_SIGNING_KEY secret not set — skipping repo"; exit 0; fi
+          ./scripts/repo-publish.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debs
+          path: build/debs/*.deb
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: repo-site
+          path: build/repo-public
+          include-hidden-files: true
+          if-no-files-found: ignore
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        with:
+          path: build/repo-public
+
+  deploy-repo:
+    name: Deploy repo to GitHub Pages
+    needs: packages
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  iso:
+    name: ISO (${{ matrix.edition }})
+    needs: packages
+    # ISOs are slow and big: build them for tags and manual runs only
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [desktop, server]
+    steps:
+      - name: Skip unrequested editions
+        id: want
+        run: |
+          want="${{ github.event.inputs.editions || 'desktop server' }}"
+          case " $want " in *" ${{ matrix.edition }} "*) echo "go=1" >> "$GITHUB_OUTPUT";; *) echo "go=0" >> "$GITHUB_OUTPUT";; esac
+      - name: Free disk space (the desktop build needs ~25 GB)
+        if: steps.want.outputs.go == '1'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af >/dev/null
+          df -h /
+      - uses: actions/checkout@v4
+        if: steps.want.outputs.go == '1'
+      - uses: actions/download-artifact@v4
+        if: steps.want.outputs.go == '1'
+        with:
+          name: debs
+          path: build/debs
+      - name: Build ISO in a Debian trixie container
+        if: steps.want.outputs.go == '1'
+        run: |
+          docker run --rm --privileged -v "$PWD:/src" -w /src debian:trixie bash -euc '
+            apt-get update
+            apt-get install -y live-build librsvg2-bin dpkg-dev curl ca-certificates \
+              xorriso squashfs-tools isolinux syslinux-common grub-efi-amd64-bin grub-pc-bin mtools dosfstools
+            ./scripts/render-assets.sh
+            SKIP_PACKAGES=1 ./build.sh ${{ matrix.edition }}
+          '
+      - name: Upload ISO
+        if: steps.want.outputs.go == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-${{ matrix.edition }}
+          path: dist/*
+          compression-level: 0
+      - name: Build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.edition }}
+          path: build/iso-${{ matrix.edition }}/build.log
+
+  release:
+    name: GitHub release
+    needs: iso
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iso-*
+          path: dist
+          merge-multiple: true
+      - name: Split ISOs over GitHub's 2 GiB asset limit
+        run: |
+          cd dist
+          for f in *.iso; do
+            if [ "$(stat -c %s "$f")" -gt 2000000000 ]; then
+              split -b 1900M -d "$f" "$f.part"
+              rm "$f"
+              echo "Rejoin with: cat $f.part* > $f" > "$f.REJOIN.txt"
+            fi
+          done
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body_path: CHANGELOG.md

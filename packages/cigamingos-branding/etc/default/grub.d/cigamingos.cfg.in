@@ -1,0 +1,17 @@
+# CiGaming OS GRUB look — shipped by cigamingos-branding
+#
+# GRUB_DISTRIBUTOR does two jobs on Debian: it labels the boot menu, AND
+# grub-install lowercases its first word into the EFI folder name.
+# Debian's Secure Boot shim/signed GRUB only work from /EFI/debian, so we
+# show "@OS_NAME@" in the menu (grub-mkconfig) but tell every other reader
+# (grub-install, the grub postinst) "Debian".
+case "$0" in
+  *grub-mkconfig*) GRUB_DISTRIBUTOR="@OS_NAME@" ;;
+  *)               GRUB_DISTRIBUTOR="Debian" ;;
+esac
+
+GRUB_BACKGROUND="/usr/share/desktop-base/cigamingos-theme/grub/grub-16x9.png"
+GRUB_COLOR_NORMAL="light-gray/black"
+GRUB_COLOR_HIGHLIGHT="yellow/black"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+GRUB_TIMEOUT=3

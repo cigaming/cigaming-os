@@ -1,0 +1,9 @@
+#!/bin/sh
+# CiGaming OS server login message
+. /etc/os-release
+printf '\n\033[38;2;245;165;36m🦁 %s\033[0m — server edition\n' "$PRETTY_NAME"
+if command -v ufw >/dev/null 2>&1 && ! ufw status 2>/dev/null | grep -q "Status: active"; then
+  printf '\033[38;2;224;112;46m   Firewall is off.\033[0m  sudo ufw allow OpenSSH && sudo ufw allow 80,443/tcp && sudo ufw enable\n'
+fi
+command -v pm2 >/dev/null 2>&1 && printf '   pm2 apps: %s running\n' "$(pm2 jlist 2>/dev/null | grep -o '"status":"online"' | wc -l)"
+printf '   cigaming update · cigaming fetch · docs: %s\n\n' "$SUPPORT_URL"

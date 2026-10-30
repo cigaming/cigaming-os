@@ -1,0 +1,48 @@
+/* CiGaming OS install slideshow (Calamares slideshowAPI 2) */
+import QtQuick 2.0
+import calamares.slideshow 1.0
+
+Presentation {
+    id: presentation
+
+    function onActivate() { advance.running = true }
+    function onLeave()    { advance.running = false }
+
+    Timer {
+        id: advance
+        interval: 9000; repeat: true; running: false
+        onTriggered: presentation.goToNextSlide()
+    }
+
+    Rectangle { anchors.fill: parent; color: "@NIGHT_HEX@"; z: -1 }
+
+    component CubSlide: Slide {
+        property string heading
+        property string body
+        Image {
+            id: cub; source: "logo.png"
+            width: 140; height: 140; fillMode: Image.PreserveAspectFit
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top; anchors.topMargin: 30
+        }
+        Text {
+            id: h; text: heading; color: "@AMBER_HEX@"
+            font.pixelSize: 30; font.bold: true
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: cub.bottom; anchors.topMargin: 24
+        }
+        Text {
+            text: body; color: "@CREAM_HEX@"; font.pixelSize: 17
+            wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
+            width: parent.width * 0.75
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: h.bottom; anchors.topMargin: 16
+        }
+    }
+
+    CubSlide { heading: "Welcome to @OS_NAME@"; body: "Debian's rock-solid base, wrapped up cozy. Sit back while the cub sets things up." }
+    CubSlide { heading: "Made for streaming"; body: "OBS Studio with virtual camera, PipeWire audio, Kdenlive and Audacity are ready to go. Discord installs itself the first time you're online." }
+    CubSlide { heading: "Game night"; body: "Steam with Proton, GameMode, MangoHud and Prism Launcher for Minecraft — come hang out on SnuggleSMP." }
+    CubSlide { heading: "Always snuggled up to date"; body: "Run  cigaming update  any time, or let Discover handle it. CiGaming OS updates arrive from our own repo right next to Debian's." }
+    CubSlide { heading: "Need a paw?"; body: "Docs and help live at @SUPPORT_URL@" }
+}

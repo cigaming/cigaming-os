@@ -1,0 +1,27 @@
+# Hardware firmware + CPU microcode, all from Debian's non-free-firmware.
+# Listed explicitly instead of live-build's --firmware-chroot auto-detection,
+# which also grabs contrib "*-installer" packages (firmware-b43-installer…)
+# that download from third-party sites at install time and break builds.
+firmware-linux
+firmware-linux-free
+firmware-linux-nonfree
+firmware-misc-nonfree
+firmware-amd-graphics
+firmware-intel-graphics
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-intel-sound
+firmware-sof-signed
+firmware-mediatek
+firmware-libertas
+firmware-bnx2
+firmware-bnx2x
+firmware-qlogic
+firmware-netronome
+firmware-cirrus
+firmware-ti-connectivity
+firmware-zd1211
+intel-microcode
+amd64-microcode

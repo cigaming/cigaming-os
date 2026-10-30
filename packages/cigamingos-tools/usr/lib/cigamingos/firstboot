@@ -1,0 +1,32 @@
+#!/bin/sh
+# Runs once on the first boot of an installed CiGaming OS desktop.
+# If the machine is offline it quietly tries again next boot.
+set -u
+STAMP=/var/lib/cigamingos/firstboot.done
+LIST=/etc/cigamingos/flatpaks.list
+log() { echo "cigamingos-firstboot: $*"; }
+
+mkdir -p /var/lib/cigamingos
+
+if ! command -v flatpak >/dev/null 2>&1; then
+  log "no flatpak on this edition, nothing to do"; touch "$STAMP"; exit 0
+fi
+
+# Wait up to ~60s for the network
+i=0
+until getent hosts dl.flathub.org >/dev/null 2>&1; do
+  i=$((i+1)); [ "$i" -gt 12 ] && { log "offline, will retry next boot"; exit 0; }
+  sleep 5
+done
+
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || exit 0
+
+apps=$(grep -vE '^[[:space:]]*(#|$)' "$LIST" 2>/dev/null | awk '{print $1}')
+if [ -n "$apps" ]; then
+  log "installing: $(echo "$apps" | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  flatpak install -y --noninteractive flathub $apps || { log "install failed, will retry next boot"; exit 0; }
+fi
+
+touch "$STAMP"
+log "done"

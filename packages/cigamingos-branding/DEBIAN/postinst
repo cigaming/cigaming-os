@@ -1,0 +1,35 @@
+#!/bin/sh
+set -e
+THEME=/usr/share/desktop-base/cigamingos-theme
+
+if [ "$1" = configure ]; then
+  # Make sure /etc/os-release points at the (now CiGaming) /usr/lib copy.
+  [ -L /etc/os-release ] || [ -e /etc/os-release ] || ln -s ../usr/lib/os-release /etc/os-release
+  # Login banners (base-files' copies were diverted to *.debian in preinst)
+  ln -sfn /usr/share/cigamingos/issue     /etc/issue
+  ln -sfn /usr/share/cigamingos/issue.net /etc/issue.net
+
+  # desktop-base theme: wallpaper, lock screen, SDDM background and GRUB image all follow this.
+  update-alternatives --install /usr/share/desktop-base/active-theme desktop-theme "$THEME" 100
+  update-alternatives --set desktop-theme "$THEME" >/dev/null 2>&1 || true
+
+  # Some desktop-base versions keep separate alternatives; point them at us too.
+  if update-alternatives --list desktop-grub >/dev/null 2>&1; then
+    update-alternatives --install /usr/share/images/desktop-base/desktop-grub.png desktop-grub "$THEME/grub/grub-16x9.png" 100
+    update-alternatives --set desktop-grub "$THEME/grub/grub-16x9.png" >/dev/null 2>&1 || true
+  fi
+
+  gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
+
+  # Boot splash
+  if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+    plymouth-set-default-theme cigamingos || true
+    command -v update-initramfs >/dev/null 2>&1 && update-initramfs -u >/dev/null 2>&1 || true
+  fi
+
+  # Regenerate the GRUB menu if GRUB is installed and we're on a real system.
+  if command -v update-grub >/dev/null 2>&1 && [ -e /boot/grub/grub.cfg ]; then
+    update-grub >/dev/null 2>&1 || true
+  fi
+fi
+exit 0

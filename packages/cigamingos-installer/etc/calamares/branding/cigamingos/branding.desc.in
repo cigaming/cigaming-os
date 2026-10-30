@@ -1,0 +1,38 @@
+---
+componentName: cigamingos
+
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 1024px,640px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+
+strings:
+    productName:         "@OS_NAME@"
+    shortProductName:    "@OS_NAME@"
+    version:             "@OS_VERSION@ (@OS_CODENAME_PRETTY@)"
+    shortVersion:        "@OS_VERSION@"
+    versionedName:       "@OS_NAME@ @OS_VERSION@ (@OS_CODENAME_PRETTY@)"
+    shortVersionedName:  "@OS_NAME@ @OS_VERSION@"
+    # Keep "Debian" so the EFI folder stays /EFI/debian (Secure Boot).
+    bootloaderEntryName: "Debian"
+    productUrl:          "@HOME_URL@"
+    supportUrl:          "@SUPPORT_URL@"
+    knownIssuesUrl:      "@BUG_URL@"
+    releaseNotesUrl:     "@HOME_URL@/docs"
+
+images:
+    productLogo:    "logo.png"
+    productIcon:    "logo.png"
+    productWelcome: "welcome.png"
+
+slideshow: "show.qml"
+slideshowAPI: 2
+
+style:
+    SidebarBackground:        "@NIGHT_HEX@"
+    SidebarText:              "@CREAM_HEX@"
+    SidebarTextCurrent:       "@NIGHT_HEX@"
+    SidebarBackgroundCurrent: "@AMBER_HEX@"

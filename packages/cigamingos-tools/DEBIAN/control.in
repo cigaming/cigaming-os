@@ -1,0 +1,12 @@
+Package: cigamingos-tools
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: admin
+Priority: optional
+Depends: cigamingos-branding (= @VERSION@), bash, sudo, pciutils
+Homepage: @HOME_URL@
+Description: CiGaming OS helper command and first-boot setup
+ Provides the `cigaming` command (fetch, update, apps, nvidia, edition)
+ and a one-time first-boot service that installs the default Flatpak
+ apps listed in /etc/cigamingos/flatpaks.list.

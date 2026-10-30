@@ -1,0 +1,16 @@
+Package: cigamingos-branding
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: misc
+Priority: optional
+Depends: base-files, desktop-base
+Recommends: plymouth, plymouth-themes
+Homepage: @HOME_URL@
+Description: CiGaming OS identity and artwork
+ Makes a Debian system identify as @OS_NAME@: os-release, login banner,
+ GRUB menu and background, Plymouth boot splash, wallpaper, SDDM login
+ background, icons and the KDE Plasma color scheme.
+ .
+ Debian's own files are diverted, not overwritten, so removing this
+ package restores stock Debian branding.

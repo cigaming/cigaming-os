@@ -1,0 +1,8 @@
+{
+  "KPlugin": {
+    "Authors": [{ "Name": "CiGaming" }],
+    "Id": "CiGamingOS",
+    "License": "CC-BY-SA-4.0",
+    "Name": "@OS_NAME@ — Cub Moon"
+  }
+}

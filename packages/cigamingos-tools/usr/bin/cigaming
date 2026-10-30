@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# cigaming — the CiGaming OS helper.
+set -uo pipefail
+
+VERSION_FILE=/usr/share/cigamingos/version
+FLATPAKS=/etc/cigamingos/flatpaks.list
+A=$'\e[38;2;245;165;36m'; M=$'\e[38;2;224;112;46m'; C=$'\e[38;2;255;244;224m'; T=$'\e[38;2;79;209;197m'; B=$'\e[1m'; R=$'\e[0m'
+[ -t 1 ] || { A=; M=; C=; T=; B=; R=; }
+
+say()  { printf '%s🦁 %s%s\n' "$A" "$*" "$R"; }
+die()  { printf '%s✗ %s%s\n' "$M" "$*" "$R" >&2; exit 1; }
+need_root() { [ "$(id -u)" -eq 0 ] || exec sudo -- "$0" "$@"; }
+
+editions() {
+  local e=()
+  for p in desktop gaming server; do
+    dpkg-query -W -f='${Status}' "cigamingos-$p" 2>/dev/null | grep -q "install ok installed" && e+=("$p")
+  done
+  [ ${#e[@]} -gt 0 ] && echo "${e[*]}" || echo "base"
+}
+
+cmd_fetch() {
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  local mem up kernel shell_name de
+  mem=$(awk '/MemTotal/{t=$2}/MemAvailable/{a=$2}END{printf "%.1f / %.1f GiB",(t-a)/1048576,t/1048576}' /proc/meminfo)
+  up=$(uptime -p 2>/dev/null | sed 's/^up //')
+  kernel=$(uname -r)
+  shell_name=$(basename "${SHELL:-sh}")
+  de=${XDG_CURRENT_DESKTOP:-none}
+  local cpu; cpu=$(awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo)
+  local gpu=""; command -v lspci >/dev/null && gpu=$(lspci 2>/dev/null | awk -F': ' '/VGA|3D/{print $2; exit}')
+  local l=(
+    "${M}   ▄▄▄▄▄▄▄▄▄   ${R}"
+    "${M} ▄█▀${A}▄▄▄▄▄▄▄${M}▀█▄ ${R}"
+    "${M}██ ${A}█ ${C}●   ●${A} █${M} ██${R}"
+    "${M}██ ${A}█  ${C}▀▄▀${A}  █${M} ██${R}"
+    "${M} ▀█▄${A}▀▄▄▄▄▄▀${M}▄█▀ ${R}"
+    "${M}   ▀▀▀▀▀▀▀▀▀   ${R}"
+  )
+  local i=(
+    "${B}${A}$(whoami)${R}@${B}${A}$(hostname)${R}"
+    "${T}os${R}       ${PRETTY_NAME}"
+    "${T}base${R}     Debian ${DEBIAN_CODENAME:-$VERSION_CODENAME}"
+    "${T}edition${R}  $(editions)"
+    "${T}kernel${R}   ${kernel}"
+    "${T}uptime${R}   ${up}"
+    "${T}cpu${R}      ${cpu}"
+  )
+  [ -n "$gpu" ] && i+=("${T}gpu${R}      ${gpu}")
+  i+=("${T}memory${R}   ${mem}" "${T}desktop${R}  ${de}   ${T}shell${R} ${shell_name}")
+  local n=${#i[@]}
+  for ((k=0; k<n; k++)); do printf '%s  %s\n' "${l[$k]:-               }" "${i[$k]}"; done
+}
+
+cmd_update() {
+  need_root update
+  say "Updating system packages…"
+  apt-get update && apt-get full-upgrade -y && apt-get autoremove -y
+  if command -v flatpak >/dev/null; then
+    say "Updating Flatpak apps…"
+    flatpak update -y --noninteractive
+  fi
+  say "All snuggled up and up to date."
+}
+
+cmd_apps() {
+  need_root apps
+  command -v flatpak >/dev/null || die "Flatpak isn't installed on this edition."
+  flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  local apps; apps=$(grep -vE '^\s*(#|$)' "$FLATPAKS" 2>/dev/null | awk '{print $1}')
+  [ -n "$apps" ] || die "No apps listed in $FLATPAKS"
+  say "Installing: $(echo "$apps" | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  flatpak install -y --noninteractive flathub $apps
+}
+
+cmd_nvidia() {
+  need_root nvidia
+  lspci 2>/dev/null | grep -qi nvidia || die "No NVIDIA GPU detected."
+  say "Installing NVIDIA drivers (non-free)…"
+  apt-get update && apt-get install -y "linux-headers-$(dpkg --print-architecture)" nvidia-driver firmware-misc-nonfree
+  dpkg --print-foreign-architectures | grep -q i386 && apt-get install -y nvidia-driver-libs:i386 || true
+  say "Done — reboot to load the driver."
+}
+
+cmd_help() {
+  cat <<EOF
+${B}${A}cigaming${R} — CiGaming OS helper  ($(cat "$VERSION_FILE" 2>/dev/null))
+
+  ${T}fetch${R}     show system info with the cub
+  ${T}update${R}    update apt packages and Flatpak apps
+  ${T}apps${R}      install the default Flatpak apps ($FLATPAKS)
+  ${T}nvidia${R}    install NVIDIA drivers
+  ${T}edition${R}   show which CiGaming OS editions are installed
+  ${T}version${R}   show the CiGaming OS version
+EOF
+}
+
+case "${1:-help}" in
+  fetch|info)  cmd_fetch ;;
+  update|up)   cmd_update ;;
+  apps)        cmd_apps ;;
+  nvidia)      cmd_nvidia ;;
+  edition)     editions ;;
+  version|-v|--version) . /etc/os-release; echo "$PRETTY_NAME" ;;
+  help|-h|--help) cmd_help ;;
+  *) cmd_help; exit 1 ;;
+esac

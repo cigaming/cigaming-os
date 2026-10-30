@@ -1,0 +1,9 @@
+[General]
+ColorScheme=CiGamingOS
+AccentColor=245,165,36
+
+[Icons]
+Theme=breeze-dark
+
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Runs in the ISO tree (binary/) after the boot menus are generated and
+# before the ISO is written. live-build hard-codes "Live system" in the
+# GRUB (UEFI) menu, so rename it here.
+set -e
+for f in boot/grub/grub.cfg boot/grub/*.cfg isolinux/*.cfg; do
+  [ -f "$f" ] || continue
+  sed -i -e 's/Live system/CiGaming OS Live/g' -e 's/Debian GNU\/Linux/CiGaming OS/g' "$f"
+done

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Runs inside the image chroot after packages are installed.
+# (Debian apt sources for the installed system are written by live-build
+#  from --mirror-binary + --archive-areas in build.sh.)
+set -e
+
+# Default boot splash
+if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+  plymouth-set-default-theme cigamingos || true
+fi
+
+# Make sure the first-boot unit is enabled in the image
+systemctl enable cigamingos-firstboot.service 2>/dev/null || true

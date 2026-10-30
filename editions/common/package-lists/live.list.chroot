@@ -1,0 +1,11 @@
+# Needed by every CiGaming OS live image
+live-boot
+live-config
+live-config-systemd
+systemd-sysv
+sudo
+locales
+console-setup
+keyboard-configuration
+cigamingos-branding
+cigamingos-tools

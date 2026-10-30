@@ -1,0 +1,5 @@
+# CiGaming OS packages win over Debian if names ever collide,
+# but nothing from our repo can downgrade Debian packages.
+Package: cigamingos-*
+Pin: origin "@REPO_HOST@"
+Pin-Priority: 900

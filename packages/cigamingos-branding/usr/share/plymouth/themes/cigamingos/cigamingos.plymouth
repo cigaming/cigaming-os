@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=CiGaming OS
+Description=The cub wakes up
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/cigamingos
+ScriptFile=/usr/share/plymouth/themes/cigamingos/cigamingos.script

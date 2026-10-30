@@ -1,0 +1,9 @@
+Origin: @OS_NAME@
+Label: @OS_NAME@
+Suite: stable
+Codename: @OS_CODENAME@
+Version: @OS_VERSION@
+Architectures: amd64 i386
+Components: main
+Description: @OS_NAME@ @OS_VERSION@ (@OS_CODENAME_PRETTY@) packages, on top of Debian @DEBIAN_BASE@
+SignWith: @FINGERPRINT@

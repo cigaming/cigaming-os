@@ -1,0 +1,5 @@
+build/
+dist/
+keys/private/
+*.iso
+*.sha256

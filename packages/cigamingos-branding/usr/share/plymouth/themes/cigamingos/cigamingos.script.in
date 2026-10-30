@@ -1,0 +1,62 @@
+# CiGaming OS boot splash — logo that gently "breathes", a progress bar,
+# and a disk-unlock prompt for encrypted installs.
+
+Window.SetBackgroundTopColor(@NIGHT_RGB@);
+Window.SetBackgroundBottomColor(@PLUM_RGB@);
+
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+cx = Window.GetX() + Window.GetWidth() / 2;
+cy = Window.GetY() + Window.GetHeight() / 2;
+logo.sprite.SetX(cx - logo.image.GetWidth() / 2);
+logo.sprite.SetY(cy - logo.image.GetHeight() / 2 - 40);
+
+bar_w = 260;
+track.image = Image("bar-track.png").Scale(bar_w, 6);
+track.sprite = Sprite(track.image);
+track.sprite.SetPosition(cx - bar_w / 2, cy + logo.image.GetHeight() / 2 + 10, 1);
+fill.base = Image("bar-fill.png");
+fill.sprite = Sprite();
+fill.sprite.SetPosition(cx - bar_w / 2, cy + logo.image.GetHeight() / 2 + 10, 2);
+
+t = 0;
+fun refresh_cb() {
+  t++;
+  logo.sprite.SetOpacity(0.8 + 0.2 * Math.Sin(t / 20));
+}
+Plymouth.SetRefreshFunction(refresh_cb);
+
+fun progress_cb(duration, progress) {
+  w = Math.Int(bar_w * progress);
+  if (w < 1) w = 1;
+  fill.sprite.SetImage(fill.base.Scale(w, 6));
+}
+Plymouth.SetBootProgressFunction(progress_cb);
+
+# --- password prompt (LUKS) ---
+prompt.sprite = Sprite();
+dots.sprite = Sprite();
+fun display_password_cb(prompt_text, bullets) {
+  prompt.sprite.SetImage(Image.Text(prompt_text, @CREAM_F@));
+  prompt.sprite.SetPosition(cx - prompt.sprite.GetImage().GetWidth() / 2, cy + 160, 3);
+  s = "";
+  for (i = 0; i < bullets; i++) s += "● ";
+  dots.sprite.SetImage(Image.Text(s, @AMBER_F@));
+  dots.sprite.SetPosition(cx - dots.sprite.GetImage().GetWidth() / 2, cy + 190, 3);
+  dots.sprite.SetOpacity(1);
+  prompt.sprite.SetOpacity(1);
+}
+fun display_normal_cb() {
+  prompt.sprite.SetOpacity(0);
+  dots.sprite.SetOpacity(0);
+}
+Plymouth.SetDisplayPasswordFunction(display_password_cb);
+Plymouth.SetDisplayNormalFunction(display_normal_cb);
+
+# --- boot messages ---
+msg.sprite = Sprite();
+fun message_cb(text) {
+  msg.sprite.SetImage(Image.Text(text, @CREAM_F@));
+  msg.sprite.SetPosition(cx - msg.sprite.GetImage().GetWidth() / 2, Window.GetHeight() - 60, 3);
+}
+Plymouth.SetMessageFunction(message_cb);

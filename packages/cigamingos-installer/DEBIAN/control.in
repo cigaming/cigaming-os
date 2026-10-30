@@ -1,0 +1,11 @@
+Package: cigamingos-installer
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: admin
+Priority: optional
+Depends: calamares, calamares-settings-debian, cigamingos-branding (= @VERSION@)
+Homepage: @HOME_URL@
+Description: CiGaming OS graphical installer (Calamares branding)
+ Brands the Calamares installer on the CiGaming OS live USB: name,
+ logo, colors and the install slideshow. Only meant for live media.

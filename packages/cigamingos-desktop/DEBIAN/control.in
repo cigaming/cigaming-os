@@ -1,0 +1,26 @@
+Package: cigamingos-desktop
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: metapackages
+Priority: optional
+Depends: cigamingos-branding (= @VERSION@), cigamingos-tools (= @VERSION@),
+ kde-plasma-desktop, sddm, plasma-nm, plasma-pa, bluedevil, kscreen, powerdevil,
+ konsole, dolphin, kate, ark, gwenview, okular, kde-spectacle, kcalc, partitionmanager,
+ firefox-esr, vlc,
+ pipewire, pipewire-pulse, wireplumber, pipewire-alsa,
+ network-manager, flatpak, plasma-discover, plasma-discover-backend-flatpak,
+ fonts-noto, fonts-noto-color-emoji, fonts-dejavu,
+ plymouth, plymouth-themes,
+ cups, system-config-printer, avahi-daemon,
+ curl, wget, git, htop, unzip, p7zip-full, pciutils, usbutils
+Recommends: obs-studio, v4l2loopback-dkms, linux-headers-amd64, kdenlive, audacity, krita,
+ kdeconnect, ffmpeg, yt-dlp, fastfetch,
+ firmware-linux, firmware-misc-nonfree, firmware-iwlwifi, firmware-realtek, firmware-amd-graphics
+Homepage: @HOME_URL@
+Description: CiGaming OS desktop (streaming + community edition)
+ The full CiGaming OS desktop: KDE Plasma with the CiGaming look,
+ PipeWire audio, Flatpak/Flathub, and a streaming toolkit — OBS Studio
+ with virtual camera support, Kdenlive, Audacity and Krita.
+ .
+ Discord and Prism Launcher are installed from Flathub on first boot.

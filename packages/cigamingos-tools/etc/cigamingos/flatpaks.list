@@ -1,0 +1,7 @@
+# Flatpak apps installed on first boot of a CiGaming OS desktop
+# (and by `sudo cigaming apps`). One Flathub app ID per line.
+# Things that aren't packaged in Debian live here.
+
+com.discordapp.Discord          # Discord
+org.prismlauncher.PrismLauncher # Minecraft (SnuggleSMP!)
+com.github.tchx84.Flatseal      # manage Flatpak permissions

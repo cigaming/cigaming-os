@@ -1,0 +1,16 @@
+[Unit]
+Description=CiGaming OS first-boot setup (default apps)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/var/lib/cigamingos/firstboot.done
+# never run inside the live USB session
+ConditionKernelCommandLine=!boot=live
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/cigamingos/firstboot
+TimeoutStartSec=30min
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
