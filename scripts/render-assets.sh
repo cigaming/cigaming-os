@@ -58,4 +58,41 @@ cat > "$OUT/calamares-welcome.svg" <<EOF
 EOF
 rsvg-convert -w 800 -h 300 "$OUT/calamares-welcome.svg" -o "$OUT/calamares-welcome.png"
 
+# Login-screen wallpaper without the name text (the login screen shows the logo instead)
+sed '/<text /d' "$OUT/wallpaper.svg" > "$OUT/wallpaper-nologo.svg"
+rsvg-convert -w 1920 -h 1080 "$OUT/wallpaper-nologo.svg" -o "$OUT/wallpaper-nologo-1920x1080.png"
+
+# Vendor logo set — replaces Debian's logos on the GDM/SDDM login screens and
+# anywhere else that reads /usr/share/images/vendor-logos (same filenames as Debian's).
+LOGO_INNER=$(sed -n '/<g transform/,$p' "$OUT/logo.svg" | sed '$d')   # the logo's drawing, minus <svg> wrapper
+lockup() { # lockup <out.svg> <with-version: 0|1>
+  local w=1150 extra=""
+  if [ "$2" = 1 ]; then
+    extra="<text x=\"300\" y=\"212\" font-family=\"DejaVu Sans\" font-size=\"56\" fill=\"$AMBER\">$OS_VERSION · $OS_CODENAME_PRETTY</text>"
+  fi
+  cat > "$1" <<EOF
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w 256" width="$w" height="256">
+  <g transform="scale(0.5)">$LOGO_INNER</g>
+  <text x="296" y="$([ "$2" = 1 ] && echo 140 || echo 170)" font-family="DejaVu Sans" font-weight="bold" font-size="112" fill="$CREAM">$OS_NAME</text>
+  $extra
+</svg>
+EOF
+}
+mkdir -p "$OUT/vendor-logos"
+lockup "$OUT/vendor-logos/logo-text.svg" 0
+lockup "$OUT/vendor-logos/logo-text-version.svg" 1
+cp "$OUT/logo.svg" "$OUT/vendor-logos/logo.svg"
+for h in 64 128 256; do
+  rsvg-convert -h "$h" "$OUT/vendor-logos/logo.svg"              -o "$OUT/vendor-logos/logo-$h.png"
+  rsvg-convert -h "$h" "$OUT/vendor-logos/logo-text.svg"         -o "$OUT/vendor-logos/logo-text-$h.png"
+  rsvg-convert -h "$h" "$OUT/vendor-logos/logo-text-version.svg" -o "$OUT/vendor-logos/logo-text-version-$h.png"
+done
+# Single-color emblems (file manager "vendor" badge, symbolic icons)
+#   symbolic: solid dark silhouette; white: cream cub that keeps its dark eyes + nose
+sed -E "s/fill=\"#[0-9a-fA-F]{6}\"/fill=\"$NIGHT\"/g; s/ opacity=\"[0-9.]+\"//g" "$OUT/logo.svg" > "$OUT/vendor-logos/emblem-symbolic.svg"
+sed -E -e "s/fill=\"($AMBER|$MANE)\"/fill=\"$CREAM\"/g" -e '/opacity=/d' "$OUT/logo.svg" > "$OUT/vendor-logos/emblem-white.svg"
+for name in symbolic white; do
+  for s in 64 128 256; do rsvg-convert -w "$s" -h "$s" "$OUT/vendor-logos/emblem-$name.svg" -o "$OUT/vendor-logos/emblem-$name-$s.png"; done
+done
+
 echo "assets → $OUT"

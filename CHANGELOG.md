@@ -1,5 +1,12 @@
 # CiGaming OS patch notes
 
+## 1.0.1 — login screen glow-up
+
+- The login screen now says **CiGaming OS** with the cub logo instead of "debian 13" — on both GNOME (GDM) and KDE (SDDM).
+- KDE's login screen gets the Cub Moon background (without the name text, so the logo isn't doubled) and gold accents.
+- New CiGaming OS logo set: name lockup, name + version lockup, and cream/dark badges replace Debian's everywhere the system asks for the "vendor" logo, such as the file manager badge.
+- Removing CiGaming OS still restores Debian's logos.
+
 ## 1.0.0 "Cub" — first release
 
 Built on Debian 13 "trixie".

@@ -54,7 +54,12 @@ add_branding_assets() { # add_branding_assets <pkgroot>
   mkdir -p "$t/login" "$t/grub"
   cp "$a/wallpaper.svg" "$t/login/background.svg"
   cp "$a/wallpaper-1920x1080.png" "$t/login/background.png"
+  cp "$a/wallpaper-nologo.svg" "$t/login/background-nologo.svg"
+  cp "$a/wallpaper-nologo-1920x1080.png" "$t/login/background-nologo.png"
   cp "$a/grub-16x9.png" "$t/grub/grub-16x9.png"
+  # vendor logo set (GDM + SDDM login screens, "vendor" emblems)
+  mkdir -p "$r/usr/share/desktop-base/cigamingos-logos"
+  cp "$a"/vendor-logos/* "$r/usr/share/desktop-base/cigamingos-logos/"
   cp "$a/grub-4x3.png"  "$t/grub/grub-4x3.png"
   # Plasma wallpaper picker entry
   mkdir -p "$r/usr/share/wallpapers"

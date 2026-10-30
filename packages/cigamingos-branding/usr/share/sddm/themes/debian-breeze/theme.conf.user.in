@@ -1,0 +1,8 @@
+; CiGaming OS overrides for Debian's Breeze SDDM login theme
+; (SDDM reads theme.conf, then this file on top of it)
+[General]
+showlogo=shown
+logo=/usr/share/desktop-base/cigamingos-logos/logo-text-version-256.png
+color=@AMBER_HEX@
+type=image
+background=/usr/share/desktop-base/cigamingos-theme/login/background-nologo.png

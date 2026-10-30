@@ -2,6 +2,7 @@
 set -e
 if [ "$1" = remove ] || [ "$1" = deconfigure ]; then
   update-alternatives --remove desktop-theme /usr/share/desktop-base/cigamingos-theme || true
+  update-alternatives --remove vendor-logos /usr/share/desktop-base/cigamingos-logos || true
   update-alternatives --remove desktop-grub /usr/share/desktop-base/cigamingos-theme/grub/grub-16x9.png 2>/dev/null || true
   if command -v plymouth-set-default-theme >/dev/null 2>&1 && \
      [ "$(plymouth-set-default-theme 2>/dev/null)" = cigamingos ]; then
