@@ -36,6 +36,7 @@ subst() { # subst <file>  — in-place token replacement
     -e "s|@NIGHT_RGB@|$(hex_float "$NIGHT")|g" -e "s|@PLUM_RGB@|$(hex_float "$PLUM")|g" \
     -e "s|@CREAM_F@|$(hex_float "$CREAM")|g" -e "s|@AMBER_F@|$(hex_float "$AMBER")|g" \
     -e "s|@NIGHT_HEX@|$NIGHT|g" -e "s|@CREAM_HEX@|$CREAM|g" -e "s|@AMBER_HEX@|$AMBER|g" \
+    -e "s|@PLUM_HEX@|$PLUM|g" -e "s|@DUSK_HEX@|$DUSK|g" -e "s|@MANE_HEX@|$MANE|g" -e "s|@TEAL_HEX@|$TEAL|g" \
     "$1"
 }
 
@@ -111,6 +112,10 @@ for src in "$ROOT"/packages/*/; do
       b="$r/etc/calamares/branding/cigamingos"
       cp "$BUILD/assets/logo-256.png" "$b/logo.png"
       cp "$BUILD/assets/calamares-welcome.png" "$b/welcome.png" ;;
+    cigamingos-welcome)
+      mkdir -p "$r/usr/share/cigamingos/welcome"
+      rsvg-convert -w 20 -h 20 <(printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="%s" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' "$NIGHT") \
+        -o "$r/usr/share/cigamingos/welcome/check.png" ;;
     cigamingos-tools)    mkdir -p "$r/usr/share/cigamingos"; echo "$OS_NAME $VERSION" > "$r/usr/share/cigamingos/version" ;;
   esac
 
@@ -130,7 +135,7 @@ EOF
   # permissions + conffiles + md5sums
   find "$r" -path "$r/DEBIAN" -prune -o -type d -exec chmod 0755 {} +
   find "$r" -path "$r/DEBIAN" -prune -o -type f -exec chmod 0644 {} +
-  for x in usr/bin/cigaming usr/lib/cigamingos/firstboot etc/update-motd.d/10-cigamingos; do
+  for x in usr/bin/cigaming usr/bin/cigamingos-welcome usr/lib/cigamingos/firstboot etc/update-motd.d/10-cigamingos; do
     if [ -f "$r/$x" ]; then chmod 0755 "$r/$x"; fi
   done
   for s in preinst postinst prerm postrm; do [ -f "$r/DEBIAN/$s" ] && chmod 0755 "$r/DEBIAN/$s"; done

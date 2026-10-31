@@ -13,8 +13,10 @@ Depends: cigamingos-branding (= @VERSION@), cigamingos-tools (= @VERSION@),
  fonts-noto, fonts-noto-color-emoji, fonts-dejavu,
  plymouth, plymouth-themes,
  cups, system-config-printer, avahi-daemon,
- curl, wget, git, htop, unzip, p7zip-full, pciutils, usbutils
-Recommends: obs-studio, v4l2loopback-dkms, linux-headers-amd64, kdenlive, audacity, krita,
+ curl, wget, git, htop, unzip, p7zip-full, pciutils, usbutils,
+ cigamingos-welcome (= @VERSION@), polkit-kde-agent-1
+Recommends: open-vm-tools-desktop, qemu-guest-agent, spice-vdagent,
+ obs-studio, v4l2loopback-dkms, linux-headers-amd64, kdenlive, audacity, krita,
  kdeconnect, ffmpeg, yt-dlp, fastfetch,
  firmware-linux, firmware-misc-nonfree, firmware-iwlwifi, firmware-realtek, firmware-amd-graphics
 Homepage: @HOME_URL@
@@ -24,3 +26,6 @@ Description: CiGaming OS desktop (streaming + community edition)
  with virtual camera support, Kdenlive, Audacity and Krita.
  .
  Discord and Prism Launcher are installed from Flathub on first boot.
+ .
+ VMware and QEMU/Proxmox guest tools are included; on real hardware
+ they stay idle.

@@ -1,0 +1,15 @@
+# CiGaming OS defaults for GNOME (overrides Debian's 10_desktop-base).
+# Only defaults: anyone who picks their own wallpaper keeps it.
+[org.gnome.desktop.background]
+picture-options='zoom'
+picture-uri='file:///usr/share/desktop-base/cigamingos-theme/wallpaper/gnome-background.xml'
+picture-uri-dark='file:///usr/share/desktop-base/cigamingos-theme/wallpaper/gnome-background.xml'
+primary-color='@NIGHT_HEX@'
+
+[org.gnome.desktop.screensaver]
+picture-options='zoom'
+picture-uri='file:///usr/share/desktop-base/cigamingos-theme/lockscreen/gnome-background.xml'
+primary-color='@NIGHT_HEX@'
+
+[org.gnome.desktop.interface]
+accent-color='orange'

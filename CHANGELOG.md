@@ -1,5 +1,21 @@
 # CiGaming OS patch notes
 
+## 1.1.0 — the welcome update
+
+**New: Welcome to CiGaming OS**
+- A welcome app opens on your first login and walks you through:
+  - **Pick your apps** — Discord, Vesktop, Chatterino, Spotify, Prism Launcher, Heroic, Lutris, GIMP and more, one click from Flathub.
+  - **Set up Twitch** — remember your channel, quick links to it and your Creator Dashboard, and how to connect OBS.
+  - **Join SnuggleSMP** — the server address with a copy button, Prism Launcher, and community links.
+- Re-open it any time from the app menu: *Welcome to CiGaming OS*.
+- `cigaming fetch` now shows your Twitch channel.
+
+**Fixes**
+- VMware and QEMU/Proxmox guest tools now come with the desktop and server (they stay idle on real hardware).
+- VMware: the mouse no longer freezes in X11 sessions (GNOME on Xorg, Plasma X11).
+- GNOME now shows the Cub Moon wallpaper instead of a plain blue background, in light and dark mode, with gold accents.
+- `convert.sh` now switches the login screen to the CiGaming one (SDDM) and starts new users in Plasma (Wayland). GNOME stays installed and pickable.
+
 ## 1.0.1 — login screen glow-up
 
 - The login screen now says **CiGaming OS** with the cub logo instead of "debian 13" — on both GNOME (GDM) and KDE (SDDM).

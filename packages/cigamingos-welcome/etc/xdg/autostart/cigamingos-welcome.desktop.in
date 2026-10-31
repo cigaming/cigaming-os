@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to @OS_NAME@
+Exec=cigamingos-welcome --autostart
+Icon=cigamingos
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=3
+X-KDE-autostart-after=panel

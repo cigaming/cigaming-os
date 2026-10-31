@@ -1,0 +1,30 @@
+[
+  {"id": "com.discordapp.Discord",          "name": "Discord",          "category": "Chat & community", "default": true,
+   "description": "Voice, video and text chat with your communities."},
+  {"id": "dev.vencord.Vesktop",             "name": "Vesktop",          "category": "Chat & community",
+   "description": "Discord with working screen-share audio on Linux — handy for streaming to friends."},
+  {"id": "org.telegram.desktop",            "name": "Telegram",         "category": "Chat & community",
+   "description": "Fast messaging app."},
+
+  {"id": "com.chatterino.chatterino",       "name": "Chatterino",       "category": "Streaming", "default": true,
+   "description": "Twitch chat client with emotes, mentions and multiple channels."},
+  {"id": "com.spotify.Client",              "name": "Spotify",          "category": "Streaming",
+   "description": "Music while you stream or play."},
+
+  {"id": "org.prismlauncher.PrismLauncher", "name": "Prism Launcher",   "category": "Gaming", "default": true,
+   "description": "Minecraft launcher — instances, mods and modpacks. Join SnuggleSMP with it!"},
+  {"id": "com.heroicgameslauncher.hgl",     "name": "Heroic",           "category": "Gaming",
+   "description": "Play your Epic Games and GOG games."},
+  {"id": "net.lutris.Lutris",               "name": "Lutris",           "category": "Gaming",
+   "description": "One place for games from everywhere, including emulators."},
+  {"id": "net.davidotek.pupgui2",           "name": "ProtonUp-Qt",      "category": "Gaming",
+   "description": "Install newer Proton-GE versions for Steam and Heroic."},
+
+  {"id": "org.gimp.GIMP",                   "name": "GIMP",             "category": "Create",
+   "description": "Image editor for emotes, thumbnails and overlays."},
+  {"id": "com.visualstudio.code",           "name": "Visual Studio Code", "category": "Create",
+   "description": "Code editor."},
+
+  {"id": "com.github.tchx84.Flatseal",      "name": "Flatseal",         "category": "Tools", "default": true,
+   "description": "Control what your Flatpak apps are allowed to access."}
+]

@@ -66,4 +66,17 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y cigamingos-keyring $PKGS
 # cigamingos-keyring now owns the real apt source + key; drop the bootstrap copies.
 rm -f "$BOOT_SRC" "$KEYRING"
 
+# Desktop editions: make SDDM (the CiGaming login screen) the display manager,
+# even when the machine already had GNOME's GDM. GNOME stays installed and
+# selectable from the session menu.
+if [ "$EDITION" = desktop ] || [ "$EDITION" = gaming ]; then
+  if [ -x /usr/bin/sddm ]; then
+    say "Switching the login screen to the CiGaming OS one (SDDM)…"
+    echo "sddm shared/default-x-display-manager select sddm" | debconf-set-selections
+    echo /usr/bin/sddm > /etc/X11/default-display-manager
+    systemctl enable --force sddm.service >/dev/null 2>&1 || \
+      ln -sfn /usr/lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
+  fi
+fi
+
 say "Welcome to @OS_NAME@! Reboot to see the new boot splash. Try: cigaming fetch"

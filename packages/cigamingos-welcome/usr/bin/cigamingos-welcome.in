@@ -1,0 +1,622 @@
+#!/usr/bin/python3
+"""CiGaming OS Welcome — shown once on first login.
+
+Pages: Welcome → Pick your apps (Flathub) → Twitch → SnuggleSMP → All set.
+
+  cigamingos-welcome               open it
+  cigamingos-welcome --autostart   what the login autostart runs: exits if already
+                                   finished, if this is the live USB, or if root
+  cigamingos-welcome --screenshot DIR   render every page to PNGs (for docs/tests)
+
+Config:  /etc/cigamingos/welcome.conf        SnuggleSMP + links
+         /etc/cigamingos/welcome-apps.json   the app picker list
+Per-user state lives in ~/.config/cigamingos/.
+"""
+import configparser
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from PyQt6.QtCore import QProcess, Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QGuiApplication, QIcon, QPixmap
+from PyQt6.QtWidgets import (
+    QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QLineEdit,
+    QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QStackedWidget,
+    QVBoxLayout, QWidget,
+)
+
+OS_NAME = "@OS_NAME@"
+CONF = Path(os.environ.get("CIGAMINGOS_WELCOME_CONF", "/etc/cigamingos/welcome.conf"))
+APPS = Path(os.environ.get("CIGAMINGOS_WELCOME_APPS", "/etc/cigamingos/welcome-apps.json"))
+LOGO = "/usr/share/icons/hicolor/256x256/apps/cigamingos.png"
+CHECK = "/usr/share/cigamingos/welcome/check.png"
+USER_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "cigamingos"
+DONE = USER_DIR / "welcome.done"
+PROFILE = USER_DIR / "profile.ini"
+FLATHUB = "https://dl.flathub.org/repo/flathub.flatpakrepo"
+
+C = {
+    "night": "@NIGHT_HEX@", "plum": "@PLUM_HEX@", "dusk": "@DUSK_HEX@",
+    "amber": "@AMBER_HEX@", "mane": "@MANE_HEX@", "cream": "@CREAM_HEX@", "teal": "@TEAL_HEX@",
+}
+
+STYLE = f"""
+QWidget {{ background: {C['night']}; color: {C['cream']}; font-size: 15px; }}
+#sidebar {{ background: {C['plum']}; }}
+#step {{ color: #a198ba; padding: 6px 10px; border-radius: 8px; background: transparent; }}
+#step[current="true"] {{ color: {C['night']}; background: {C['amber']}; font-weight: bold; }}
+#step[past="true"] {{ color: {C['cream']}; }}
+#h1 {{ font-size: 30px; font-weight: bold; color: {C['amber']}; background: transparent; }}
+#lead {{ font-size: 16px; color: {C['cream']}; background: transparent; }}
+#muted {{ color: #a198ba; background: transparent; }}
+#card {{ background: {C['plum']}; border-radius: 12px; }}
+#card QLabel, #card QCheckBox {{ background: transparent; }}
+#tag {{ color: {C['night']}; background: {C['teal']}; border-radius: 6px; padding: 1px 8px; font-size: 12px; font-weight: bold; }}
+#big {{ font-size: 24px; font-weight: bold; color: {C['amber']}; font-family: monospace; background: transparent; }}
+QPushButton {{ background: {C['dusk']}; color: {C['cream']}; border: none; border-radius: 10px; padding: 9px 18px; }}
+QPushButton:hover {{ background: #4d3d8f; }}
+QPushButton:disabled {{ color: #7d7596; background: #2a2245; }}
+QPushButton#primary {{ background: {C['amber']}; color: {C['night']}; font-weight: bold; }}
+QPushButton#primary:hover {{ background: #ffb83d; }}
+QPushButton#primary:disabled {{ background: #7a5a24; color: {C['night']}; }}
+QLineEdit {{ background: {C['plum']}; border: 2px solid {C['dusk']}; border-radius: 10px; padding: 9px 12px; color: {C['cream']}; }}
+QLineEdit:focus {{ border-color: {C['amber']}; }}
+QCheckBox {{ spacing: 10px; }}
+QCheckBox::indicator {{ width: 20px; height: 20px; border-radius: 5px; border: 2px solid {C['dusk']}; background: {C['night']}; }}
+QCheckBox::indicator:checked {{ background: {C['amber']}; border-color: {C['amber']}; image: url({CHECK}); }}
+QCheckBox::indicator:checked:disabled {{ background: {C['teal']}; border-color: {C['teal']}; }}
+QProgressBar {{ background: {C['plum']}; border: none; border-radius: 5px; height: 10px; }}
+QProgressBar::chunk {{ background: {C['amber']}; border-radius: 5px; }}
+QPlainTextEdit {{ background: {C['plum']}; border: none; border-radius: 10px; color: #cfc7e6; font-family: monospace; font-size: 12px; }}
+QScrollArea, QScrollArea > QWidget > QWidget {{ background: transparent; border: none; }}
+QScrollBar:vertical {{ background: transparent; width: 10px; }}
+QScrollBar::handle:vertical {{ background: {C['dusk']}; border-radius: 5px; min-height: 30px; }}
+QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; }}
+"""
+
+
+# --------------------------------------------------------------------------- helpers
+def load_conf():
+    cp = configparser.ConfigParser()
+    cp.read_dict({"snugglesmp": {"address": "", "website": "", "community": ""},
+                  "links": {"docs": "", "discover": ""}})
+    cp.read(CONF)
+    return cp
+
+
+def load_apps():
+    try:
+        return json.loads(APPS.read_text())
+    except (OSError, ValueError):
+        return []
+
+
+def have_flatpak():
+    return shutil.which("flatpak") is not None
+
+
+def flatpak_installed(app_id):
+    if not have_flatpak():
+        return False
+    return subprocess.run(["flatpak", "info", app_id], stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode == 0
+
+
+def open_url(url):
+    if url:
+        QDesktopServices.openUrl(QUrl(url))
+
+
+def label(text, name=None, wrap=True):
+    lab = QLabel(text)
+    if name:
+        lab.setObjectName(name)
+    lab.setWordWrap(wrap)
+    lab.setTextFormat(Qt.TextFormat.RichText)
+    lab.setOpenExternalLinks(True)
+    return lab
+
+
+def button(text, primary=False, on_click=None):
+    b = QPushButton(text)
+    if primary:
+        b.setObjectName("primary")
+    b.setCursor(Qt.CursorShape.PointingHandCursor)
+    if on_click:
+        b.clicked.connect(on_click)
+    return b
+
+
+def card():
+    f = QFrame()
+    f.setObjectName("card")
+    lay = QVBoxLayout(f)
+    lay.setContentsMargins(18, 16, 18, 16)
+    lay.setSpacing(8)
+    return f, lay
+
+
+def is_live_session():
+    try:
+        return "boot=live" in Path("/proc/cmdline").read_text()
+    except OSError:
+        return False
+
+
+def read_profile():
+    cp = configparser.ConfigParser()
+    cp.read(PROFILE)
+    return cp
+
+
+def save_profile(**twitch):
+    cp = read_profile()
+    if not cp.has_section("twitch"):
+        cp.add_section("twitch")
+    for k, v in twitch.items():
+        cp.set("twitch", k, v)
+    USER_DIR.mkdir(parents=True, exist_ok=True)
+    with PROFILE.open("w") as fh:
+        cp.write(fh)
+
+
+# --------------------------------------------------------------------------- window
+class Welcome(QWidget):
+    STEPS = ["Welcome", "Your apps", "Twitch", "SnuggleSMP", "All set"]
+
+    def __init__(self):
+        super().__init__()
+        self.conf = load_conf()
+        self.apps = load_apps()
+        self.proc = None
+        self.setWindowTitle(f"Welcome to {OS_NAME}")
+        self.setWindowIcon(QIcon(LOGO))
+        self.resize(980, 640)
+        self.setMinimumSize(820, 560)
+
+        root = QHBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        # sidebar
+        side = QWidget()
+        side.setObjectName("sidebar")
+        side.setFixedWidth(220)
+        sl = QVBoxLayout(side)
+        sl.setContentsMargins(20, 28, 20, 20)
+        logo = QLabel()
+        logo.setStyleSheet("background: transparent;")
+        logo.setPixmap(QPixmap(LOGO).scaled(96, 96, Qt.AspectRatioMode.KeepAspectRatio,
+                                            Qt.TransformationMode.SmoothTransformation))
+        logo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        sl.addWidget(logo)
+        name = label(f"<b>{OS_NAME}</b>")
+        name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        name.setStyleSheet("background: transparent; font-size: 17px;")
+        sl.addWidget(name)
+        sl.addSpacing(22)
+        self.step_labels = []
+        for s in self.STEPS:
+            lab = QLabel(s)
+            lab.setObjectName("step")
+            sl.addWidget(lab)
+            self.step_labels.append(lab)
+        sl.addStretch(1)
+        root.addWidget(side)
+
+        # content + nav
+        main = QVBoxLayout()
+        main.setContentsMargins(36, 32, 36, 24)
+        self.stack = QStackedWidget()
+        main.addWidget(self.stack, 1)
+        nav = QHBoxLayout()
+        nav.setSpacing(10)
+        self.back = button("Back", on_click=lambda: self.go(self.stack.currentIndex() - 1))
+        self.skip = button("Skip setup", on_click=self.finish)
+        self.next = button("Next", primary=True, on_click=self.on_next)
+        nav.addWidget(self.back)
+        nav.addStretch(1)
+        nav.addWidget(self.skip)
+        nav.addWidget(self.next)
+        main.addLayout(nav)
+        root.addLayout(main, 1)
+
+        for build in (self.page_welcome, self.page_apps, self.page_twitch,
+                      self.page_snuggle, self.page_done):
+            self.stack.addWidget(build())
+        self.go(0)
+
+    # -- navigation
+    def go(self, i):
+        i = max(0, min(i, self.stack.count() - 1))
+        self.stack.setCurrentIndex(i)
+        for k, lab in enumerate(self.step_labels):
+            lab.setProperty("current", k == i)
+            lab.setProperty("past", k < i)
+            lab.style().unpolish(lab)
+            lab.style().polish(lab)
+        self.back.setVisible(i > 0)
+        self.skip.setVisible(i < self.stack.count() - 1)
+        last = i == self.stack.count() - 1
+        self.next.setText("Finish" if last else ("Let's go" if i == 0 else "Next"))
+        self.refresh_finish()
+
+    def on_next(self):
+        i = self.stack.currentIndex()
+        if i == 2:
+            self.save_twitch()
+        if i == self.stack.count() - 1:
+            self.finish()
+        else:
+            self.go(i + 1)
+
+    def finish(self):
+        if self.installing():
+            return
+        if not self.show_again.isChecked():
+            USER_DIR.mkdir(parents=True, exist_ok=True)
+            DONE.touch()
+        self.close()
+
+    def refresh_finish(self):
+        last = self.stack.currentIndex() == self.stack.count() - 1
+        busy = self.installing()
+        self.next.setEnabled(not (last and busy))
+        if last and busy:
+            self.next.setText("Installing apps…")
+
+    # -- page 1
+    def page_welcome(self):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setSpacing(14)
+        user = os.environ.get("USER", "")
+        hi = f"Hi {user}! " if user and user != "root" else "Hi! "
+        lay.addWidget(label(f"{hi}Welcome to {OS_NAME} 🦁", "h1"))
+        lay.addWidget(label(
+            "Your new system is cozy, up to date, and ready for streaming and gaming. "
+            "Let's take a minute to make it yours.", "lead"))
+        lay.addSpacing(8)
+        for title, body in (
+            ("Pick your apps", "Discord, Minecraft, Twitch chat, music and more — one click from Flathub."),
+            ("Set up Twitch", "Remember your channel and get OBS streaming to it."),
+            ("Join SnuggleSMP", "Our Minecraft community, ready when you are."),
+        ):
+            f, fl = card()
+            fl.addWidget(label(f"<b style='color:{C['amber']}'>{title}</b>"))
+            fl.addWidget(label(body, "muted"))
+            lay.addWidget(f)
+        lay.addStretch(1)
+        lay.addWidget(label("You can open this again any time from the app menu: <i>Welcome to "
+                            f"{OS_NAME}</i>.", "muted"))
+        return w
+
+    # -- page 2
+    def page_apps(self):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setSpacing(12)
+        lay.addWidget(label("Pick your apps", "h1"))
+        if not have_flatpak():
+            lay.addWidget(label("Flatpak isn't installed on this system, so the app picker is "
+                                "unavailable. Install it with <code>sudo apt install flatpak</code>.", "lead"))
+            lay.addStretch(1)
+            return w
+        lay.addWidget(label("Tick what you'd like. They install from Flathub and keep themselves "
+                            "updated with <code>cigaming update</code>.", "muted"))
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        inner = QWidget()
+        grid = QVBoxLayout(inner)
+        grid.setSpacing(8)
+        grid.setContentsMargins(0, 0, 8, 0)
+        self.app_boxes = {}
+        groups = {}
+        for app in self.apps:
+            groups.setdefault(app.get("category", "Other"), []).append(app)
+        for cat, items in groups.items():
+            grid.addWidget(label(f"<b>{cat}</b>", "muted"))
+            for app in items:
+                f, fl = card()
+                fl.setContentsMargins(14, 10, 14, 10)
+                row = QHBoxLayout()
+                cb = QCheckBox(app["name"])
+                cb.setStyleSheet("font-weight: bold;")
+                installed = flatpak_installed(app["id"])
+                cb.setChecked(installed or bool(app.get("default")))
+                cb.setEnabled(not installed)
+                row.addWidget(cb)
+                row.addStretch(1)
+                if installed:
+                    t = QLabel("Installed")
+                    t.setObjectName("tag")
+                    row.addWidget(t)
+                fl.addLayout(row)
+                fl.addWidget(label(app.get("description", ""), "muted"))
+                grid.addWidget(f)
+                self.app_boxes[app["id"]] = cb
+        grid.addStretch(1)
+        scroll.setWidget(inner)
+        lay.addWidget(scroll, 1)
+
+        bottom = QHBoxLayout()
+        self.install_status = label("", "muted")
+        self.install_btn = button("Install selected", primary=True, on_click=self.install_selected)
+        bottom.addWidget(self.install_status, 1)
+        bottom.addWidget(self.install_btn)
+        lay.addLayout(bottom)
+        self.progress = QProgressBar()
+        self.progress.setTextVisible(False)
+        self.progress.setRange(0, 0)
+        self.progress.hide()
+        lay.addWidget(self.progress)
+        self.log = QPlainTextEdit()
+        self.log.setReadOnly(True)
+        self.log.setMaximumHeight(90)
+        self.log.hide()
+        lay.addWidget(self.log)
+        return w
+
+    def selected_apps(self):
+        return [i for i, cb in getattr(self, "app_boxes", {}).items() if cb.isEnabled() and cb.isChecked()]
+
+    def installing(self):
+        return self.proc is not None and self.proc.state() != QProcess.ProcessState.NotRunning
+
+    def install_selected(self):
+        self.install(self.selected_apps())
+
+    def install(self, ids):
+        if self.installing():
+            return
+        if not ids:
+            self.install_status.setText("Nothing new to install — you're all set.")
+            return
+        cmd = (f"flatpak remote-add --if-not-exists --system flathub {shlex.quote(FLATHUB)} && "
+               f"flatpak install --system -y --noninteractive flathub {' '.join(map(shlex.quote, ids))}")
+        self.proc = QProcess(self)
+        self.proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        self.proc.readyReadStandardOutput.connect(self.on_output)
+        self.proc.finished.connect(lambda code, _s: self.on_installed(code, ids))
+        self.install_btn.setEnabled(False)
+        self.install_status.setText(f"Installing {len(ids)} app{'s' if len(ids) != 1 else ''}… "
+                                    "you may be asked for your password.")
+        self.progress.show()
+        self.log.show()
+        self.log.clear()
+        self.proc.start("sh", ["-c", cmd])
+        self.refresh_finish()
+
+    def on_output(self):
+        text = bytes(self.proc.readAllStandardOutput()).decode(errors="replace")
+        for line in re.split(r"[\r\n]+", text):
+            if line.strip():
+                self.log.appendPlainText(line.strip())
+
+    def on_installed(self, code, ids):
+        self.progress.hide()
+        self.install_btn.setEnabled(True)
+        if code == 0:
+            self.install_status.setText("Done! Your apps are in the app menu. 🎉")
+            for i in ids:
+                cb = self.app_boxes.get(i)
+                if cb:
+                    cb.setEnabled(False)
+            self.log.hide()
+        else:
+            self.install_status.setText("Something went wrong — details below. Check your internet "
+                                        "connection and try again.")
+        self.refresh_finish()
+        self.refresh_snuggle()
+
+    # -- page 3
+    def page_twitch(self):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setSpacing(12)
+        lay.addWidget(label("Set up Twitch", "h1"))
+        lay.addWidget(label("Tell us your channel and we'll keep your Twitch links handy. "
+                            "Leave it empty if you don't stream.", "muted"))
+        self.twitch = QLineEdit()
+        self.twitch.setPlaceholderText("your Twitch username")
+        self.twitch.setMaxLength(25)
+        self.twitch.setText(read_profile().get("twitch", "username", fallback=""))
+        self.twitch.textChanged.connect(self.on_twitch_changed)
+        lay.addWidget(self.twitch)
+        self.twitch_hint = label("", "muted")
+        self.twitch_hint.hide()
+        lay.addWidget(self.twitch_hint)
+
+        row = QHBoxLayout()
+        self.btn_channel = button("Open my channel", on_click=lambda: open_url(
+            f"https://www.twitch.tv/{self.twitch_user()}"))
+        self.btn_dash = button("Open Creator Dashboard", on_click=lambda: open_url(
+            f"https://dashboard.twitch.tv/u/{self.twitch_user()}/home"))
+        row.addWidget(self.btn_channel)
+        row.addWidget(self.btn_dash)
+        row.addStretch(1)
+        lay.addLayout(row)
+
+        f, fl = card()
+        fl.addWidget(label(f"<b style='color:{C['amber']}'>Go live with OBS Studio</b>"))
+        fl.addWidget(label("OBS is already installed. To link it to your Twitch account: open OBS → "
+                           "<b>Settings</b> → <b>Stream</b> → Service <b>Twitch</b> → "
+                           "<b>Connect Account</b>, and sign in. That also adds Twitch chat and "
+                           "activity docks inside OBS.", "muted"))
+        orow = QHBoxLayout()
+        obs = button("Open OBS Studio", on_click=lambda: QProcess.startDetached("obs", []))
+        obs.setEnabled(shutil.which("obs") is not None)
+        orow.addWidget(obs)
+        orow.addStretch(1)
+        fl.addLayout(orow)
+        lay.addWidget(f)
+        lay.addStretch(1)
+        self.on_twitch_changed()
+        return w
+
+    def twitch_user(self):
+        return self.twitch.text().strip().lstrip("@").lower()
+
+    def twitch_valid(self):
+        return re.fullmatch(r"[a-z0-9_]{3,25}", self.twitch_user()) is not None
+
+    def on_twitch_changed(self):
+        ok = self.twitch_valid()
+        self.btn_channel.setEnabled(ok)
+        self.btn_dash.setEnabled(ok)
+        self.twitch_hint.setVisible(bool(self.twitch_user()))
+        if not self.twitch_user():
+            self.twitch_hint.setText("")
+        elif ok:
+            self.twitch_hint.setText(f"twitch.tv/{self.twitch_user()} — shows up in "
+                                     "<code>cigaming fetch</code> too.")
+        else:
+            self.twitch_hint.setText("Twitch names are 3–25 letters, numbers or underscores.")
+
+    def save_twitch(self):
+        if self.twitch_valid():
+            save_profile(username=self.twitch_user())
+
+    # -- page 4
+    def page_snuggle(self):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setSpacing(12)
+        s = self.conf["snugglesmp"]
+        lay.addWidget(label("Join SnuggleSMP", "h1"))
+        lay.addWidget(label("SnuggleSMP is our cozy Minecraft community. Come build, explore and "
+                            "hang out with everyone from stream.", "lead"))
+        addr = s.get("address", "").strip()
+        if addr:
+            f, fl = card()
+            fl.addWidget(label("Server address", "muted"))
+            r = QHBoxLayout()
+            r.addWidget(label(addr, "big", wrap=False))
+            r.addStretch(1)
+            copied = label("", "muted", wrap=False)
+            r.addWidget(copied)
+
+            def copy():
+                QGuiApplication.clipboard().setText(addr)
+                copied.setText("Copied!")
+            r.addWidget(button("Copy", on_click=copy))
+            fl.addLayout(r)
+            fl.addWidget(label("In Minecraft: <b>Multiplayer</b> → <b>Add Server</b> → paste the address.", "muted"))
+            lay.addWidget(f)
+
+        f, fl = card()
+        fl.addWidget(label(f"<b style='color:{C['amber']}'>Minecraft with Prism Launcher</b>"))
+        fl.addWidget(label("Prism Launcher signs in with your Microsoft account and manages "
+                           "Minecraft versions and mods for you.", "muted"))
+        pr = QHBoxLayout()
+        self.prism_btn = button("", primary=True, on_click=self.prism_action)
+        pr.addWidget(self.prism_btn)
+        pr.addStretch(1)
+        fl.addLayout(pr)
+        lay.addWidget(f)
+
+        links = QHBoxLayout()
+        if s.get("website", "").strip():
+            links.addWidget(button("Website", on_click=lambda: open_url(s.get("website"))))
+        if s.get("community", "").strip():
+            links.addWidget(button("Community chat", on_click=lambda: open_url(s.get("community"))))
+        links.addStretch(1)
+        lay.addLayout(links)
+        lay.addStretch(1)
+        self.refresh_snuggle()
+        return w
+
+    PRISM = "org.prismlauncher.PrismLauncher"
+
+    def refresh_snuggle(self):
+        if not hasattr(self, "prism_btn"):
+            return
+        if not have_flatpak():
+            self.prism_btn.setText("Prism Launcher needs Flatpak")
+            self.prism_btn.setEnabled(False)
+        elif flatpak_installed(self.PRISM):
+            self.prism_btn.setText("Open Prism Launcher")
+            self.prism_btn.setEnabled(True)
+        else:
+            self.prism_btn.setText("Installing…" if self.installing() else "Get Prism Launcher")
+            self.prism_btn.setEnabled(not self.installing())
+
+    def prism_action(self):
+        if flatpak_installed(self.PRISM):
+            QProcess.startDetached("flatpak", ["run", self.PRISM])
+        else:
+            if hasattr(self, "app_boxes") and self.PRISM in self.app_boxes:
+                self.app_boxes[self.PRISM].setChecked(True)
+            self.install([self.PRISM])
+            self.refresh_snuggle()
+
+    # -- page 5
+    def page_done(self):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setSpacing(12)
+        lay.addWidget(label("You're all set! 🧸", "h1"))
+        lay.addWidget(label(f"Enjoy {OS_NAME}. A few things worth knowing:", "lead"))
+        for cmd, what in (
+            ("cigaming update", "updates everything — system, CiGaming OS and your apps"),
+            ("cigaming fetch", "shows off your system (and your Twitch) with the cub"),
+            ("Discover", "the app store, for anything else you want"),
+        ):
+            f, fl = card()
+            fl.setContentsMargins(16, 10, 16, 10)
+            fl.addWidget(label(f"<b style='color:{C['amber']}; font-family: monospace'>{cmd}</b>"
+                               f"<span style='color:#a198ba'> — {what}</span>"))
+            lay.addWidget(f)
+        docs = self.conf["links"].get("docs", "").strip()
+        if docs:
+            lay.addWidget(label(f"Need a paw? <a style='color:{C['teal']}' href='{docs}'>{docs}</a>", "muted"))
+        lay.addStretch(1)
+        self.show_again = QCheckBox("Show this welcome at every login")
+        lay.addWidget(self.show_again)
+        return w
+
+    def closeEvent(self, ev):
+        if self.installing():
+            # closing would kill the install half-way; keep the window until it's done
+            ev.ignore()
+            self.go(1)
+            self.install_status.setText("Hang on — your apps are still installing. "
+                                        "This window can close once they're done.")
+            return
+        super().closeEvent(ev)
+
+
+def screenshot(win, out):
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    for i in range(win.stack.count()):
+        win.go(i)
+        QApplication.processEvents()
+        win.grab().save(str(out / f"welcome-{i + 1}.png"))
+
+
+def main():
+    args = sys.argv[1:]
+    if "--autostart" in args:
+        if DONE.exists() or is_live_session() or os.geteuid() == 0:
+            return 0
+    app = QApplication(sys.argv)
+    app.setApplicationName("cigamingos-welcome")
+    app.setDesktopFileName("cigamingos-welcome")
+    app.setStyleSheet(STYLE)
+    win = Welcome()
+    if "--screenshot" in args:
+        screenshot(win, args[args.index("--screenshot") + 1])
+        return 0
+    win.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

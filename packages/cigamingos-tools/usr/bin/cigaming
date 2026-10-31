@@ -48,6 +48,9 @@ cmd_fetch() {
     "${T}cpu${R}      ${cpu}"
   )
   [ -n "$gpu" ] && i+=("${T}gpu${R}      ${gpu}")
+  local tw=""; tw=$(awk -F' *= *' '/^\[twitch\]/{s=1;next} /^\[/{s=0} s&&$1=="username"{print $2}' \
+    "${XDG_CONFIG_HOME:-$HOME/.config}/cigamingos/profile.ini" 2>/dev/null)
+  [ -n "$tw" ] && i+=("${T}twitch${R}   twitch.tv/${tw}")
   i+=("${T}memory${R}   ${mem}" "${T}desktop${R}  ${de}   ${T}shell${R} ${shell_name}")
   local n=${#i[@]}
   for ((k=0; k<n; k++)); do printf '%s  %s\n' "${l[$k]:-               }" "${i[$k]}"; done

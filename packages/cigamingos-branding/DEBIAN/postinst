@@ -39,6 +39,10 @@ if [ "$1" = configure ]; then
   update-alternatives --set vendor-logos "$L" >/dev/null 2>&1 || true
 
   gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || true
+  # GNOME defaults (wallpaper, lock screen, accent) from 20_cigamingos.gschema.override
+  if command -v glib-compile-schemas >/dev/null 2>&1; then
+    glib-compile-schemas /usr/share/glib-2.0/schemas 2>/dev/null || true
+  fi
 
   # Boot splash
   if command -v plymouth-set-default-theme >/dev/null 2>&1; then

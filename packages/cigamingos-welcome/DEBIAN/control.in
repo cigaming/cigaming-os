@@ -1,0 +1,15 @@
+Package: cigamingos-welcome
+Version: @VERSION@
+Architecture: all
+Maintainer: CiGaming <admin@snugglesmp.com>
+Section: misc
+Priority: optional
+Depends: cigamingos-branding (= @VERSION@), python3, python3-pyqt6, flatpak, xdg-utils
+Recommends: qt6-wayland
+Homepage: @HOME_URL@
+Description: CiGaming OS first-login welcome app
+ Opens once on a new user's first login: pick apps to install from
+ Flathub, set up Twitch, and join the SnuggleSMP Minecraft community.
+ Re-open it any time from the app menu ("Welcome to CiGaming OS").
+ .
+ Settings: /etc/cigamingos/welcome.conf and welcome-apps.json.

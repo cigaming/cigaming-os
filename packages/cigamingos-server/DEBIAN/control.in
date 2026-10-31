@@ -9,7 +9,7 @@ Depends: cigamingos-branding (= @VERSION@), cigamingos-tools (= @VERSION@),
  caddy, postgresql, nodejs, npm, git, build-essential,
  curl, wget, rsync, htop, tmux, vim, jq, unzip, ca-certificates, chrony,
  logrotate, needrestart
-Recommends: fastfetch, btop, ncdu
+Recommends: fastfetch, btop, ncdu, open-vm-tools, qemu-guest-agent
 Homepage: @HOME_URL@
 Description: CiGaming OS server (fleet edition)
  A headless CiGaming OS for running the streamer-site and bot fleet:

@@ -9,5 +9,9 @@ if [ "$1" = remove ] || [ "$1" = abort-install ] || [ "$1" = disappear ]; then
     dpkg-divert --package cigamingos-branding --remove --rename \
       --divert "$f.debian" "$f" >/dev/null || true
   done
+  # our GNOME override is gone now; recompile so Debian's defaults return
+  if command -v glib-compile-schemas >/dev/null 2>&1; then
+    glib-compile-schemas /usr/share/glib-2.0/schemas 2>/dev/null || true
+  fi
 fi
 exit 0

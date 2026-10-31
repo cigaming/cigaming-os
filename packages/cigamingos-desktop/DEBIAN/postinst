@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+  # New users land in Plasma (Wayland) on the SDDM login screen. SDDM
+  # remembers each user's last pick, so this only sets the starting point.
+  STATE=/var/lib/sddm/state.conf
+  if [ -d /var/lib/sddm ] && [ ! -e "$STATE" ] && [ -e /usr/share/wayland-sessions/plasma.desktop ]; then
+    printf '[Last]\nSession=/usr/share/wayland-sessions/plasma.desktop\n' > "$STATE"
+    getent passwd sddm >/dev/null && chown sddm:sddm "$STATE" || true
+  fi
+fi
+exit 0

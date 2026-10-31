@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to @OS_NAME@
+Comment=Pick your apps, set up Twitch and join SnuggleSMP
+Exec=cigamingos-welcome
+Icon=cigamingos
+Categories=System;Settings;
+Keywords=welcome;setup;apps;twitch;snugglesmp;minecraft;

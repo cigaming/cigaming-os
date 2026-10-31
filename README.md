@@ -100,6 +100,15 @@ cigaming nvidia    install NVIDIA drivers
 cigaming edition   which editions are installed
 ```
 
+## The welcome app
+
+`cigamingos-welcome` opens once on each user's first login (never on the live USB or for root) and can be re-opened from the app menu. Two files control it — both are ordinary config files, so local edits survive updates:
+
+- `/etc/cigamingos/welcome.conf` — SnuggleSMP server address, website and community links, and the help link. Empty values hide that part of the page.
+- `/etc/cigamingos/welcome-apps.json` — the app picker: Flathub ID, name, category, description, and whether it's ticked by default.
+
+To change them for everyone, edit the copies in `packages/cigamingos-welcome/etc/cigamingos/` and ship a new version. `cigamingos-welcome --screenshot DIR` renders every page to PNGs.
+
 ## Design notes (why it's built this way)
 
 - **Debian's files are diverted, not overwritten.** `os-release`, `/etc/issue` and `/etc/issue.net` are moved aside with `dpkg-divert`, so Debian upgrades never fight us and removing our package restores them.
@@ -122,7 +131,6 @@ build.sh         builds one ISO
 
 ## Roadmap ideas
 
-- First-run welcome app (pick your apps, link your Twitch, join SnuggleSMP)
 - CorsiOS / NoniOS / SolaeOS / AxeonosOS / Echo flavours — same base, different `palette.env` + wallpaper, like the web OS family
 - Package the streamer tools (DeskLayer, OverlayHub companion) as `.deb`s in the repo
 - Plymouth and SDDM themes that mirror the web OS boot sequence
