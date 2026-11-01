@@ -1,5 +1,10 @@
 # CiGaming OS patch notes
 
+## 1.1.1 — login screen fix
+
+- The login screen now uses Wayland. The older X11 login could fail to start in virtual machines and leave you at a black text screen after boot.
+- The login screen now uses the CiGaming login theme (cub logo, Cub Moon background) on converted machines too, instead of KDE's plain one.
+
 ## 1.1.0 — the welcome update
 
 **New: Welcome to CiGaming OS**
