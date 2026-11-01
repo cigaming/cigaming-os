@@ -14,6 +14,7 @@
 - VMware and QEMU/Proxmox guest tools now come with the desktop and server (they stay idle on real hardware).
 - VMware: the mouse no longer freezes in X11 sessions (GNOME on Xorg, Plasma X11).
 - GNOME now shows the Cub Moon wallpaper instead of a plain blue background, in light and dark mode, with gold accents.
+- `convert.sh` is safe to run again on a machine that's already CiGaming OS (it used to stop with "Conflicting values set for option Signed-By"), and cleans up after itself if interrupted.
 - `convert.sh` now switches the login screen to the CiGaming one (SDDM) and starts new users in Plasma (Wayland). GNOME stays installed and pickable.
 
 ## 1.0.1 — login screen glow-up

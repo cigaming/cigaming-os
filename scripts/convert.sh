@@ -31,18 +31,31 @@ case "$EDITION" in
   *) die "edition must be one of: base desktop gaming server" ;;
 esac
 
-say "Adding the @OS_NAME@ repository…"
-apt-get update -qq
-apt-get install -y -qq ca-certificates curl >/dev/null
-curl -fsSL "$REPO/cigamingos-archive-keyring.gpg" -o "$KEYRING"
 BOOT_SRC=/etc/apt/sources.list.d/cigamingos-bootstrap.sources
-cat > "$BOOT_SRC" <<EOF
+# Leftovers from an interrupted run would make apt refuse to work; clear them
+# now and again on exit, whether or not this run succeeds.
+cleanup() { rm -f "$BOOT_SRC" "$KEYRING"; }
+cleanup
+trap cleanup EXIT
+
+if [ -f /etc/apt/sources.list.d/cigamingos.sources ] && \
+   [ -f /usr/share/keyrings/cigamingos-archive-keyring.gpg ]; then
+  # Already converted: cigamingos-keyring provides the repo. Adding a second
+  # copy with another key would make apt reject both.
+  say "@OS_NAME@ repository already set up."
+else
+  say "Adding the @OS_NAME@ repository…"
+  apt-get update -qq
+  apt-get install -y -qq ca-certificates curl >/dev/null
+  curl -fsSL "$REPO/cigamingos-archive-keyring.gpg" -o "$KEYRING"
+  cat > "$BOOT_SRC" <<EOF
 Types: deb
 URIs: $REPO
 Suites: $SUITE
 Components: main
 Signed-By: $KEYRING
 EOF
+fi
 
 # The desktop/gaming editions need contrib + non-free (Steam, firmware).
 if [ "$EDITION" = desktop ] || [ "$EDITION" = gaming ]; then
@@ -63,8 +76,9 @@ say "Installing $PKGS (+ keyring)…"
 # shellcheck disable=SC2086
 DEBIAN_FRONTEND=noninteractive apt-get install -y cigamingos-keyring $PKGS
 
-# cigamingos-keyring now owns the real apt source + key; drop the bootstrap copies.
-rm -f "$BOOT_SRC" "$KEYRING"
+# cigamingos-keyring now owns the real apt source + key; drop the bootstrap copies
+# before anything below runs apt again.
+cleanup
 
 # Desktop editions: make SDDM (the CiGaming login screen) the display manager,
 # even when the machine already had GNOME's GDM. GNOME stays installed and
